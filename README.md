@@ -7,7 +7,7 @@ Una **Barra de Tareas Flotante, Minimalista y Ultra Rápida para Windows**, dise
 ## ✨ Características Principales
 
 * 💼 **Workspaces / Espacios de Trabajo Personalizables (`workspaces.json`):** Escribe en el buscador (`Alt + Space`) términos como `"editar"`, `"dev"`, `"gaming"` para abrir y organizar tus aplicaciones en slots predefinidos (ej: Premiere en `1`, Omni en `2`).
-* 🔒 **Botón Seguro de Reordenamiento (Drag & Drop):** Botón con candado en la barra (o `Alt + Shift + E`) que desbloquea temporalmente el ratón para **arrastrar y reordenar las aplicaciones entre los slots `1..9`**. Al cerrar el candado o presionar `Esc`, el orden se guarda y la barra vuelve al modo seguro de transparencia total al ratón.
+* 🔒 **Botón Seguro de Reordenamiento (Drag & Drop):** Botón con candado en la barra (o `Shift + Alt + Space`) que desbloquea temporalmente el ratón para **arrastrar y reordenar las aplicaciones entre los slots `1..9`**. Al cerrar el candado o presionar `Esc`, el orden se guarda y la barra vuelve al modo seguro de transparencia total al ratón.
 * 🖥️ **Soporte Multi-Monitor Nativo:** La barra de tareas se proyecta de forma sincronizada e independiente en **todas las pantallas conectadas**, adaptándose a las resoluciones de cada monitor en tiempo real.
 * 🚀 **Inicio Automático con Windows (*Auto-Start on Boot*):** Se inicia de forma 100% silenciosa en segundo plano cada vez que inicias sesión en tu equipo.
 * ⚡ **Feedback Visual Instantáneo (0ms):** Al presionar `Super + 1..9` (`Win+1..9` o `Alt+1..9`), el foco se traslada de inmediato en el mismo fotograma sin retrasos perceptibles.
@@ -30,6 +30,7 @@ Una **Barra de Tareas Flotante, Minimalista y Ultra Rápida para Windows**, dise
 | **`Win + 1` .. `Win + 9`** | Enfocar / Restaurar ventana abierta (o Minimizar si ya tiene el foco) |
 | **`Alt + 1` .. `Alt + 9`** | Alternativa al atajo numérico para teclados sin tecla Super/Win |
 | **`Alt + Space`** | Abrir / Cerrar el Buscador y Lanzador de aplicaciones personalizado |
+| **`Shift + Alt + Space`** | Activar / Desactivar el Modo Seguro de Reordenamiento (Arrastrar y Soltar) |
 | **`Alt + Shift + T`** | Enfocar la barra para navegar con **Flechas (`←` / `→`)**, **`Tab`**, **`Enter`** y **`Esc`** |
 
 ---
