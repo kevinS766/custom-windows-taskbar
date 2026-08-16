@@ -1,0 +1,15 @@
+{
+  "name": "custom-windows-taskbar",
+  "version": "1.0.0",
+  "description": "Custom Windows Taskbar Prototype with Global Keybinds and Glassmorphic UI",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js",
+    "stop": "taskkill /F /IM electron.exe"
+  },
+  "dependencies": {
+    "electron": "^35.7.5",
+    "node-global-key-listener": "^0.3.0",
+    "systeminformation": "^5.25.11"
+  }
+}

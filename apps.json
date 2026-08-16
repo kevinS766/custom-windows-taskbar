@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Brave Browser",
+    "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Brave.lnk",
+    "desc": "Navegador Web"
+  },
+  {
+    "name": "Discord",
+    "path": "C:\\Users\\omega\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Discord Inc\\Discord.lnk",
+    "desc": "Chat y Comunidad"
+  },
+  {
+    "name": "Epic Games",
+    "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Epic Games Launcher.lnk",
+    "desc": "Lanzador de Juegos"
+  },
+  {
+    "name": "Adobe Premiere Pro",
+    "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Adobe Premiere Pro 2026.lnk",
+    "desc": "Edición de Video"
+  },
+  {
+    "name": "Git Bash",
+    "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Git\\Git Bash.lnk",
+    "desc": "Terminal de Comandos Git"
+  },
+  {
+    "name": "Omni Media Explorer",
+    "path": "C:\\Users\\omega\\Documents\\Omni\\tools\\OmniMediaExplorer.exe",
+    "desc": "Explorador Multimedia Omni"
+  },
+  {
+    "name": "OpenCode",
+    "path": "C:\\Users\\omega\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\OpenCode.lnk",
+    "desc": "Editor de Código"
+  },
+  {
+    "name": "Antigravity",
+    "path": "C:\\Users\\omega\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Antigravity.lnk",
+    "desc": "Entorno Antigravity"
+  }
+]

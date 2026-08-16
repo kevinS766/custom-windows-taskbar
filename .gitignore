@@ -1,0 +1,19 @@
+# Node & Electron dependencies
+node_modules/
+dist/
+.electron/
+*.log
+
+# System & OS Files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary & Build files
+*.obj
+*.pdb
+*.tmp
+*.bak
+
+# Antigravity Brain logs
+.system_generated/

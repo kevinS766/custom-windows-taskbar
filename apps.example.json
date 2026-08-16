@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Brave Browser",
+    "path": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    "desc": "Navegador Web"
+  },
+  {
+    "name": "Discord",
+    "path": "C:\\Users\\%USERNAME%\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe",
+    "desc": "Chat y Comunidad"
+  },
+  {
+    "name": "Visual Studio Code",
+    "path": "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+    "desc": "Editor de Código"
+  },
+  {
+    "name": "Git Bash",
+    "path": "C:\\Program Files\\Git\\git-bash.exe",
+    "desc": "Terminal de Comandos Git"
+  },
+  {
+    "name": "Windows Terminal",
+    "path": "wt",
+    "desc": "Terminal PowerShell / CMD"
+  }
+]

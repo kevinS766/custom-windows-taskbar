@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Custom Windows Taskbar</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body class="theme-mono-dark">
+  <!-- Expandable Command Launcher Overlay (Placed above taskbar inside fixed canvas) -->
+  <div class="launcher-overlay hidden" id="launcher-overlay">
+    <div class="launcher-card">
+      <div class="launcher-header">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="launcher-input" placeholder="Buscar programas instalados, comandos o URLs (ej: Discord, Brave, Calc, OpenCode)..." autocomplete="off" spellcheck="false" />
+        <button class="launcher-close" id="launcher-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="launcher-results" id="launcher-results">
+        <!-- Dynamically rendered installed apps & search results -->
+      </div>
+      <div class="launcher-footer">
+        <span><kbd>↑</kbd> <kbd>↓</kbd> Navegar</span>
+        <span><kbd>Enter</kbd> Abrir programa</span>
+        <span><kbd>Esc</kbd> Cerrar</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Taskbar Container -->
+  <div id="taskbar-container" class="taskbar-container" tabindex="0">
+    <!-- Left Section: Open Running Windows Only with Sliding Pill Indicator -->
+    <div class="section left">
+      <div class="running-apps-wrapper">
+        <div id="active-pill" class="active-pill"></div>
+        <div class="running-apps" id="running-apps"></div>
+      </div>
+    </div>
+
+    <!-- Center Section: Command Launcher trigger & Search Input -->
+    <div class="section center">
+      <div class="search-trigger" id="search-trigger" data-tooltip="Buscar / Lanzar (Alt+Space)" tabindex="50">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="search-placeholder">Buscar o ejecutar...</span>
+        <kbd class="shortcut-kbd">Alt + Space</kbd>
+      </div>
+    </div>
+
+    <!-- Right Section: Clock & Date -->
+    <div class="section right">
+      <div class="widget clock-widget" id="clock-widget" data-tooltip="Fecha y Hora" tabindex="51">
+        <div class="time" id="clock-time">00:00:00</div>
+        <div class="date" id="clock-date">Cargando...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
