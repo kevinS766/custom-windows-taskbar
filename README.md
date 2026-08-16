@@ -91,6 +91,40 @@ Edita el archivo [`apps.json`](./apps.json) para definir exactamente las aplicac
 
 ---
 
+## 💼 Configuración de Espacios de Trabajo (`workspaces.json`)
+
+Puedes definir tus propios espacios de trabajo en [`workspaces.json`](./workspaces.json) (tienes una plantilla de referencia en [`workspaces.example.json`](./workspaces.example.json)). 
+
+Al escribir en el buscador (`Alt + Space`) palabras clave como `"editar"` o el nombre de tu workspace, se abrirán y organizarán automáticamente las aplicaciones en sus slots correspondientes (`1..9`):
+
+```json
+[
+  {
+    "id": "editar",
+    "name": "Workspace: Edición de Video",
+    "desc": "Adobe Premiere Pro [1] + Omni Media Explorer [2]",
+    "keywords": ["editar", "video", "premiere", "omni", "multimedia", "edit"],
+    "slots": [
+      {
+        "slot": 1,
+        "name": "Adobe Premiere Pro",
+        "processName": "Adobe Premiere Pro",
+        "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Adobe Premiere Pro 2026.lnk"
+      },
+      {
+        "slot": 2,
+        "name": "Omni Media Explorer",
+        "processName": "OmniMediaExplorer",
+        "path": "C:\\Users\\omega\\Documents\\Omni\\tools\\OmniMediaExplorer.exe"
+      }
+    ]
+  }
+]
+```
+* **Hot-Reload:** Al guardar [`workspaces.json`](./workspaces.json), la barra recarga los espacios en vivo de forma instantánea sin necesidad de reiniciar la app.
+
+---
+
 ## 🛠️ Control Opcional de la Barra Nativa de Windows
 
 Si deseas ocultar o restaurar la barra de tareas estándar de Windows:

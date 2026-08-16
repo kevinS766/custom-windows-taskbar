@@ -18,5 +18,25 @@
         "path": "C:\\Users\\omega\\Documents\\Omni\\tools\\OmniMediaExplorer.exe"
       }
     ]
+  },
+  {
+    "id": "ejemplo",
+    "name": "Workspace: Mi Espacio Personalizado",
+    "desc": "Descripción opcional de las apps en este workspace",
+    "keywords": ["ejemplo", "custom", "mi-espacio"],
+    "slots": [
+      {
+        "slot": 1,
+        "name": "Nombre App 1",
+        "processName": "proceso1",
+        "path": "C:\\Ruta\\A\\Tu\\AccesoDirecto_o_Ejecutable.lnk"
+      },
+      {
+        "slot": 2,
+        "name": "Nombre App 2",
+        "processName": "proceso2",
+        "path": "C:\\Ruta\\A\\Tu\\App2.exe"
+      }
+    ]
   }
 ]

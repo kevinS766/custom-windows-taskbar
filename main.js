@@ -434,7 +434,17 @@ ipcMain.handle('get-system-stats', async () => {
   }
 });
 
+function hideWindowsDefaultTaskbar() {
+  const ps1Path = path.join(__dirname, 'quitar-barra-windows.ps1');
+  if (fs.existsSync(ps1Path)) {
+    exec(`powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "${ps1Path}"`, (err) => {
+      if (err) console.error('Error hiding default Windows taskbar:', err);
+    });
+  }
+}
+
 app.whenReady().then(() => {
+  hideWindowsDefaultTaskbar();
   createTaskbarWindows();
   setupMouseProximityDetector();
   setupWindowTracker();
