@@ -22,12 +22,14 @@ const iconCache = {};
 let customAppsCache = [];
 let workspacesCache = [];
 
-// Configure native auto-start at Windows login
+// Configure native auto-start at Windows login (only if packaged as production executable)
 try {
-  app.setLoginItemSettings({
-    openAtLogin: true,
-    openAsHidden: false
-  });
+  if (app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      openAsHidden: false
+    });
+  }
 } catch (e) {}
 
 async function getIconForPath(filePath) {
