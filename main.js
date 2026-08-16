@@ -345,14 +345,9 @@ function setupStandardShortcuts() {
     });
   } catch (e) {}
 
-  // Shift+Alt+Space / Alt+Shift+Space -> Toggle Secure Edit Mode
+  // Alt+Shift+E -> Toggle Secure Edit Mode
   try {
-    globalShortcut.register('Alt+Shift+Space', () => {
-      broadcastToAll('trigger-action', { actionId: 'toggle-edit-mode' });
-    });
-  } catch (e) {}
-  try {
-    globalShortcut.register('Shift+Alt+Space', () => {
+    globalShortcut.register('Alt+Shift+E', () => {
       broadcastToAll('trigger-action', { actionId: 'toggle-edit-mode' });
     });
   } catch (e) {}
