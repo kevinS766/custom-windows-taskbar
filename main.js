@@ -285,52 +285,28 @@ function setupLowLevelKeyboardListener() {
   if (vKeyListener) vKeyListener.kill();
   vKeyListener = new GlobalKeyboardListener();
 
-  let winKeyDownTime = 0;
-  let winKeyOtherKeyPressed = false;
-
   vKeyListener.addListener((e, down) => {
-    const isMetaKey = (e.name === 'LEFT META' || e.name === 'RIGHT META' || e.name === 'META');
+    if (e.state !== 'DOWN') return;
 
-    if (e.state === 'DOWN') {
-      if (isMetaKey) {
-        if (winKeyDownTime === 0) {
-          winKeyDownTime = Date.now();
-          winKeyOtherKeyPressed = false;
-        }
-      } else if (winKeyDownTime > 0) {
-        winKeyOtherKeyPressed = true;
-      }
+    const isWinPressed = down['LEFT META'] || down['RIGHT META'] || down['META'];
+    const isAltPressed = down['LEFT ALT'] || down['RIGHT ALT'] || down['ALT'];
 
-      const isWinPressed = down['LEFT META'] || down['RIGHT META'] || down['META'];
-      const isAltPressed = down['LEFT ALT'] || down['RIGHT ALT'] || down['ALT'];
+    if (isWinPressed || isAltPressed) {
+      const keyName = e.name ? e.name.toUpperCase() : '';
+      
+      let appIndex = null;
+      if (keyName === '1' || keyName === 'NUMPAD 1') appIndex = 1;
+      else if (keyName === '2' || keyName === 'NUMPAD 2') appIndex = 2;
+      else if (keyName === '3' || keyName === 'NUMPAD 3') appIndex = 3;
+      else if (keyName === '4' || keyName === 'NUMPAD 4') appIndex = 4;
+      else if (keyName === '5' || keyName === 'NUMPAD 5') appIndex = 5;
+      else if (keyName === '6' || keyName === 'NUMPAD 6') appIndex = 6;
+      else if (keyName === '7' || keyName === 'NUMPAD 7') appIndex = 7;
+      else if (keyName === '8' || keyName === 'NUMPAD 8') appIndex = 8;
+      else if (keyName === '9' || keyName === 'NUMPAD 9') appIndex = 9;
 
-      if (isWinPressed || isAltPressed) {
-        const keyName = e.name ? e.name.toUpperCase() : '';
-        
-        let appIndex = null;
-        if (keyName === '1' || keyName === 'NUMPAD 1') appIndex = 1;
-        else if (keyName === '2' || keyName === 'NUMPAD 2') appIndex = 2;
-        else if (keyName === '3' || keyName === 'NUMPAD 3') appIndex = 3;
-        else if (keyName === '4' || keyName === 'NUMPAD 4') appIndex = 4;
-        else if (keyName === '5' || keyName === 'NUMPAD 5') appIndex = 5;
-        else if (keyName === '6' || keyName === 'NUMPAD 6') appIndex = 6;
-        else if (keyName === '7' || keyName === 'NUMPAD 7') appIndex = 7;
-        else if (keyName === '8' || keyName === 'NUMPAD 8') appIndex = 8;
-        else if (keyName === '9' || keyName === 'NUMPAD 9') appIndex = 9;
-
-        if (appIndex !== null) {
-          broadcastToAll('trigger-action', { actionId: 'app-launch', data: appIndex });
-        }
-      }
-    } else if (e.state === 'UP') {
-      if (isMetaKey) {
-        const pressDuration = Date.now() - winKeyDownTime;
-        if (winKeyDownTime > 0 && !winKeyOtherKeyPressed && pressDuration < 600) {
-          // Single Win key tap intercepted! Toggle launcher seamlessly
-          triggerToggleSearch();
-        }
-        winKeyDownTime = 0;
-        winKeyOtherKeyPressed = false;
+      if (appIndex !== null) {
+        broadcastToAll('trigger-action', { actionId: 'app-launch', data: appIndex });
       }
     }
   });
