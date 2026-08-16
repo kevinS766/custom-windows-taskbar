@@ -35,15 +35,45 @@ try {
 async function getIconForPath(filePath) {
   if (!filePath) return null;
   if (iconCache[filePath]) return iconCache[filePath];
+
   try {
     if (!fs.existsSync(filePath)) return null;
-    const icon = await app.getFileIcon(filePath, { size: 'normal' });
-    const dataUrl = icon.toDataURL();
-    iconCache[filePath] = dataUrl;
-    return dataUrl;
+
+    let targetToExtract = filePath;
+
+    // If it's a shortcut (.lnk), resolve its target and custom icon path
+    if (filePath.toLowerCase().endsWith('.lnk')) {
+      try {
+        const sc = shell.readShortcutLink(filePath);
+        if (sc.icon && fs.existsSync(sc.icon)) {
+          targetToExtract = sc.icon;
+        } else if (sc.target && fs.existsSync(sc.target)) {
+          targetToExtract = sc.target;
+        }
+      } catch (e) {}
+    }
+
+    // If the target is directly a .ico file, read it directly into base64
+    if (targetToExtract.toLowerCase().endsWith('.ico') && fs.existsSync(targetToExtract)) {
+      try {
+        const icoBuffer = fs.readFileSync(targetToExtract);
+        const dataUrl = `data:image/x-icon;base64,${icoBuffer.toString('base64')}`;
+        iconCache[filePath] = dataUrl;
+        return dataUrl;
+      } catch (e) {}
+    }
+
+    // Extract native high-res icon from executable
+    if (fs.existsSync(targetToExtract)) {
+      const icon = await app.getFileIcon(targetToExtract, { size: 'large' });
+      const dataUrl = icon.toDataURL();
+      iconCache[filePath] = dataUrl;
+      return dataUrl;
+    }
   } catch (e) {
     return null;
   }
+  return null;
 }
 
 // Load custom user applications from apps.json
@@ -241,32 +271,66 @@ function setupWindowTracker() {
   setTimeout(pollWindows, 300);
 }
 
+function triggerToggleSearch() {
+  const targetWin = getActiveDisplayWindow();
+  if (targetWin && !targetWin.isDestroyed()) {
+    isKeyboardActive = true;
+    targetWin.show();
+    targetWin.focus();
+    targetWin.webContents.send('trigger-action', { actionId: 'toggle-search' });
+  }
+}
+
 function setupLowLevelKeyboardListener() {
   if (vKeyListener) vKeyListener.kill();
   vKeyListener = new GlobalKeyboardListener();
 
+  let winKeyDownTime = 0;
+  let winKeyOtherKeyPressed = false;
+
   vKeyListener.addListener((e, down) => {
-    if (e.state !== 'DOWN') return;
+    const isMetaKey = (e.name === 'LEFT META' || e.name === 'RIGHT META' || e.name === 'META');
 
-    const isWinPressed = down['LEFT META'] || down['RIGHT META'] || down['META'];
-    const isAltPressed = down['LEFT ALT'] || down['RIGHT ALT'] || down['ALT'];
+    if (e.state === 'DOWN') {
+      if (isMetaKey) {
+        if (winKeyDownTime === 0) {
+          winKeyDownTime = Date.now();
+          winKeyOtherKeyPressed = false;
+        }
+      } else if (winKeyDownTime > 0) {
+        winKeyOtherKeyPressed = true;
+      }
 
-    if (isWinPressed || isAltPressed) {
-      const keyName = e.name ? e.name.toUpperCase() : '';
-      
-      let appIndex = null;
-      if (keyName === '1' || keyName === 'NUMPAD 1') appIndex = 1;
-      else if (keyName === '2' || keyName === 'NUMPAD 2') appIndex = 2;
-      else if (keyName === '3' || keyName === 'NUMPAD 3') appIndex = 3;
-      else if (keyName === '4' || keyName === 'NUMPAD 4') appIndex = 4;
-      else if (keyName === '5' || keyName === 'NUMPAD 5') appIndex = 5;
-      else if (keyName === '6' || keyName === 'NUMPAD 6') appIndex = 6;
-      else if (keyName === '7' || keyName === 'NUMPAD 7') appIndex = 7;
-      else if (keyName === '8' || keyName === 'NUMPAD 8') appIndex = 8;
-      else if (keyName === '9' || keyName === 'NUMPAD 9') appIndex = 9;
+      const isWinPressed = down['LEFT META'] || down['RIGHT META'] || down['META'];
+      const isAltPressed = down['LEFT ALT'] || down['RIGHT ALT'] || down['ALT'];
 
-      if (appIndex !== null) {
-        broadcastToAll('trigger-action', { actionId: 'app-launch', data: appIndex });
+      if (isWinPressed || isAltPressed) {
+        const keyName = e.name ? e.name.toUpperCase() : '';
+        
+        let appIndex = null;
+        if (keyName === '1' || keyName === 'NUMPAD 1') appIndex = 1;
+        else if (keyName === '2' || keyName === 'NUMPAD 2') appIndex = 2;
+        else if (keyName === '3' || keyName === 'NUMPAD 3') appIndex = 3;
+        else if (keyName === '4' || keyName === 'NUMPAD 4') appIndex = 4;
+        else if (keyName === '5' || keyName === 'NUMPAD 5') appIndex = 5;
+        else if (keyName === '6' || keyName === 'NUMPAD 6') appIndex = 6;
+        else if (keyName === '7' || keyName === 'NUMPAD 7') appIndex = 7;
+        else if (keyName === '8' || keyName === 'NUMPAD 8') appIndex = 8;
+        else if (keyName === '9' || keyName === 'NUMPAD 9') appIndex = 9;
+
+        if (appIndex !== null) {
+          broadcastToAll('trigger-action', { actionId: 'app-launch', data: appIndex });
+        }
+      }
+    } else if (e.state === 'UP') {
+      if (isMetaKey) {
+        const pressDuration = Date.now() - winKeyDownTime;
+        if (winKeyDownTime > 0 && !winKeyOtherKeyPressed && pressDuration < 600) {
+          // Single Win key tap intercepted! Toggle launcher seamlessly
+          triggerToggleSearch();
+        }
+        winKeyDownTime = 0;
+        winKeyOtherKeyPressed = false;
       }
     }
   });
@@ -288,13 +352,7 @@ function setupStandardShortcuts() {
   // Alt+Space -> Toggle Command Launcher
   try {
     globalShortcut.register('Alt+Space', () => {
-      const targetWin = getActiveDisplayWindow();
-      if (targetWin && !targetWin.isDestroyed()) {
-        isKeyboardActive = true;
-        targetWin.show();
-        targetWin.focus();
-        targetWin.webContents.send('trigger-action', { actionId: 'toggle-search' });
-      }
+      triggerToggleSearch();
     });
   } catch (e) {}
 
