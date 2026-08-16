@@ -1,0 +1,68 @@
+[
+  {
+    "id": "editar",
+    "name": "Workspace: Edición de Video",
+    "desc": "Adobe Premiere Pro [1] + Omni Media Explorer [2]",
+    "keywords": ["editar", "video", "premiere", "omni", "multimedia", "edit"],
+    "slots": [
+      {
+        "slot": 1,
+        "name": "Adobe Premiere Pro",
+        "processName": "Adobe Premiere Pro",
+        "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Adobe Premiere Pro 2026.lnk"
+      },
+      {
+        "slot": 2,
+        "name": "Omni Media Explorer",
+        "processName": "OmniMediaExplorer",
+        "path": "C:\\Users\\omega\\Documents\\Omni\\tools\\OmniMediaExplorer.exe"
+      }
+    ]
+  },
+  {
+    "id": "dev",
+    "name": "Workspace: Desarrollo",
+    "desc": "OpenCode [1] + Git Bash [2] + Brave Browser [3]",
+    "keywords": ["dev", "codigo", "programar", "opencode", "git", "terminal", "brave"],
+    "slots": [
+      {
+        "slot": 1,
+        "name": "OpenCode",
+        "processName": "OpenCode",
+        "path": "C:\\Users\\omega\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\OpenCode.lnk"
+      },
+      {
+        "slot": 2,
+        "name": "Git Bash",
+        "processName": "mintty",
+        "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Git\\Git Bash.lnk"
+      },
+      {
+        "slot": 3,
+        "name": "Brave Browser",
+        "processName": "brave",
+        "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Brave.lnk"
+      }
+    ]
+  },
+  {
+    "id": "gaming",
+    "name": "Workspace: Juegos & Comunidad",
+    "desc": "Discord [1] + Epic Games Launcher [2]",
+    "keywords": ["juegos", "gaming", "discord", "epic", "comunidad"],
+    "slots": [
+      {
+        "slot": 1,
+        "name": "Discord",
+        "processName": "Discord",
+        "path": "C:\\Users\\omega\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Discord Inc\\Discord.lnk"
+      },
+      {
+        "slot": 2,
+        "name": "Epic Games",
+        "processName": "EpicGamesLauncher",
+        "path": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Epic Games Launcher.lnk"
+      }
+    ]
+  }
+]

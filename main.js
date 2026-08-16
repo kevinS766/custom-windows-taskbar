@@ -14,10 +14,13 @@ let mouseCheckInterval = null;
 let windowTrackerInterval = null;
 let pollWindows = null;
 let isKeyboardActive = false;
+let isEditModeActive = false;
 const trackerPath = path.join(__dirname, 'window-tracker.exe');
 const appsConfigPath = path.join(__dirname, 'apps.json');
+const workspacesConfigPath = path.join(__dirname, 'workspaces.json');
 const iconCache = {};
 let customAppsCache = [];
+let workspacesCache = [];
 
 // Configure native auto-start at Windows login
 try {
@@ -68,13 +71,52 @@ async function loadCustomApps() {
   return apps;
 }
 
-// Auto-reload when apps.json is edited and saved by user
-function setupAppsConfigFileWatcher() {
+// Load workspaces from workspaces.json
+async function loadWorkspaces() {
+  let list = [];
+  try {
+    if (fs.existsSync(workspacesConfigPath)) {
+      const raw = fs.readFileSync(workspacesConfigPath, 'utf-8');
+      list = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Error reading workspaces.json:', e.message);
+  }
+
+  // Pre-extract icons for workspace slots
+  for (const ws of list) {
+    if (Array.isArray(ws.slots)) {
+      for (const slot of ws.slots) {
+        if (slot.path && fs.existsSync(slot.path) && !slot.iconBase64) {
+          try {
+            const icon = await getIconForPath(slot.path);
+            if (icon) slot.iconBase64 = icon;
+          } catch (e) {}
+        }
+      }
+    }
+  }
+
+  workspacesCache = list;
+  return list;
+}
+
+// Auto-reload when config files are edited and saved
+function setupConfigFileWatchers() {
   try {
     fs.watch(appsConfigPath, async () => {
       setTimeout(async () => {
         await loadCustomApps();
         broadcastToAll('apps-reloaded', customAppsCache);
+      }, 500);
+    });
+  } catch (e) {}
+
+  try {
+    fs.watch(workspacesConfigPath, async () => {
+      setTimeout(async () => {
+        await loadWorkspaces();
+        broadcastToAll('workspaces-reloaded', workspacesCache);
       }, 500);
     });
   } catch (e) {}
@@ -91,7 +133,6 @@ function broadcastToAll(channel, ...args) {
 
 // Create taskbar instances on ALL connected displays
 function createTaskbarWindows() {
-  // Close existing windows cleanly if display setup changed
   taskbarWindows.forEach(entry => {
     try {
       if (entry.win && !entry.win.isDestroyed()) {
@@ -103,7 +144,7 @@ function createTaskbarWindows() {
 
   const displays = screen.getAllDisplays();
 
-  displays.forEach((display, index) => {
+  displays.forEach((display) => {
     const barWidth = Math.min(1240, display.bounds.width - 40);
     const totalWindowHeight = 480;
     const taskbarH = 60;
@@ -133,8 +174,8 @@ function createTaskbarWindows() {
     win.setAlwaysOnTop(true, 'screen-saver');
     win.setSkipTaskbar(true);
 
-    // Mouse clicks pass through to background apps
-    win.setIgnoreMouseEvents(true, { forward: true });
+    // Initial click-through mode
+    win.setIgnoreMouseEvents(!isEditModeActive, { forward: true });
 
     win.loadFile(path.join(__dirname, 'index.html'));
 
@@ -154,14 +195,13 @@ function setupMouseProximityDetector() {
   if (mouseCheckInterval) clearInterval(mouseCheckInterval);
 
   mouseCheckInterval = setInterval(() => {
-    if (isKeyboardActive || taskbarWindows.length === 0) return;
+    if (isKeyboardActive || isEditModeActive || taskbarWindows.length === 0) return;
 
     const point = screen.getCursorScreenPoint();
 
     taskbarWindows.forEach(entry => {
       if (!entry.win || entry.win.isDestroyed()) return;
 
-      // Check if mouse is hovering in the bottom 60px taskbar area of this monitor
       const isMouseOver = (
         point.x >= entry.posX - 10 &&
         point.x <= entry.posX + entry.barWidth + 10 &&
@@ -243,7 +283,7 @@ function getActiveDisplayWindow() {
 function setupStandardShortcuts() {
   globalShortcut.unregisterAll();
 
-  // Alt+Space -> Toggle Command Launcher on the screen where the cursor is
+  // Alt+Space -> Toggle Command Launcher
   try {
     globalShortcut.register('Alt+Space', () => {
       const targetWin = getActiveDisplayWindow();
@@ -256,7 +296,7 @@ function setupStandardShortcuts() {
     });
   } catch (e) {}
 
-  // Alt+Shift+T -> Focus Taskbar for Arrow Navigation on the screen where the cursor is
+  // Alt+Shift+T -> Focus Taskbar for Arrow Navigation
   try {
     globalShortcut.register('Alt+Shift+T', () => {
       const targetWin = getActiveDisplayWindow();
@@ -266,6 +306,13 @@ function setupStandardShortcuts() {
         targetWin.focus();
         targetWin.webContents.send('trigger-action', { actionId: 'focus-bar' });
       }
+    });
+  } catch (e) {}
+
+  // Alt+Shift+E -> Toggle Secure Edit Mode
+  try {
+    globalShortcut.register('Alt+Shift+E', () => {
+      broadcastToAll('trigger-action', { actionId: 'toggle-edit-mode' });
     });
   } catch (e) {}
 }
@@ -292,6 +339,13 @@ ipcMain.handle('get-installed-apps', async () => {
     return await loadCustomApps();
   }
   return customAppsCache;
+});
+
+ipcMain.handle('get-workspaces', async () => {
+  if (workspacesCache.length === 0) {
+    return await loadWorkspaces();
+  }
+  return workspacesCache;
 });
 
 ipcMain.handle('focus-window', async (event, hWnd) => {
@@ -351,6 +405,16 @@ ipcMain.handle('execute-app', async (event, payload) => {
   }
 });
 
+// Toggle Secure Edit Mode / Mouse pass-through
+ipcMain.on('set-ignore-mouse-events', (event, ignore) => {
+  isEditModeActive = !ignore;
+  taskbarWindows.forEach(entry => {
+    if (entry.win && !entry.win.isDestroyed()) {
+      entry.win.setIgnoreMouseEvents(ignore, { forward: true });
+    }
+  });
+});
+
 ipcMain.on('set-keyboard-active', (event, active) => {
   isKeyboardActive = active;
 });
@@ -375,7 +439,8 @@ app.whenReady().then(() => {
   setupLowLevelKeyboardListener();
   setupStandardShortcuts();
   loadCustomApps();
-  setupAppsConfigFileWatcher();
+  loadWorkspaces();
+  setupConfigFileWatchers();
   setupDisplayEventListeners();
 });
 
