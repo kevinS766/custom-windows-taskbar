@@ -40,7 +40,7 @@ Una **Barra de Tareas Flotante, Minimalista y Ultra Rápida para Windows**, dise
 ### Instalación
 1. Clona el repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/custom-windows-taskbar.git
+   git clone https://github.com/kevinS766/custom-windows-taskbar.git
    cd custom-windows-taskbar
    ```
 2. Instala las dependencias:
