@@ -6,6 +6,8 @@ Una **Barra de Tareas Flotante, Minimalista y Ultra Rápida para Windows**, dise
 
 ## ✨ Características Principales
 
+* 🖥️ **Soporte Multi-Monitor Nativo:** La barra de tareas se proyecta de forma sincronizada e independiente en **todas las pantallas conectadas**, adaptándose a las resoluciones de cada monitor en tiempo real.
+* 🚀 **Inicio Automático con Windows (*Auto-Start on Boot*):** Se inicia de forma 100% silenciosa en segundo plano cada vez que inicias sesión en tu equipo.
 * ⚡ **Feedback Visual Instantáneo (0ms):** Al presionar `Super + 1..9` (`Win+1..9` o `Alt+1..9`), el foco se traslada de inmediato en el mismo fotograma sin retrasos perceptibles.
 * 🎞️ **Píldora Activa Deslizante (*Sliding Pill*):** Indicador de foco suave con física elástica (`cubic-bezier`) acelerada por GPU (`CSS transform: translateX`) que viaja entre las aplicaciones activas.
 * 🔄 **Conmutación Inteligente (*Toggle Minimize*):**

@@ -8,7 +8,7 @@ const { GlobalKeyboardListener } = require('node-global-key-listener');
 app.setPath('userData', path.join(app.getPath('temp'), 'custom-taskbar-data'));
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 
-let mainWindow;
+let taskbarWindows = []; // Array of { win, displayId, posX, posY, barWidth, totalWindowHeight, taskbarTopY }
 let vKeyListener;
 let mouseCheckInterval = null;
 let windowTrackerInterval = null;
@@ -18,6 +18,14 @@ const trackerPath = path.join(__dirname, 'window-tracker.exe');
 const appsConfigPath = path.join(__dirname, 'apps.json');
 const iconCache = {};
 let customAppsCache = [];
+
+// Configure native auto-start at Windows login
+try {
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    openAsHidden: false
+  });
+} catch (e) {}
 
 async function getIconForPath(filePath) {
   if (!filePath) return null;
@@ -66,90 +74,109 @@ function setupAppsConfigFileWatcher() {
     fs.watch(appsConfigPath, async () => {
       setTimeout(async () => {
         await loadCustomApps();
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('apps-reloaded', customAppsCache);
-        }
+        broadcastToAll('apps-reloaded', customAppsCache);
       }, 500);
     });
   } catch (e) {}
 }
 
-function createWindow() {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
-  const displayBounds = primaryDisplay.bounds;
-
-  const barWidth = Math.min(1240, width - 40);
-  const totalWindowHeight = 480;
-  
-  const posX = Math.floor((width - barWidth) / 2);
-  const posY = displayBounds.height - totalWindowHeight;
-
-  mainWindow = new BrowserWindow({
-    width: barWidth,
-    height: totalWindowHeight,
-    x: posX,
-    y: posY,
-    frame: false,
-    transparent: true,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    resizable: false,
-    hasShadow: false,
-    focusable: true,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
+// Broadcast IPC message to all taskbar windows across all monitors
+function broadcastToAll(channel, ...args) {
+  taskbarWindows.forEach(entry => {
+    if (entry.win && !entry.win.isDestroyed()) {
+      entry.win.webContents.send(channel, ...args);
     }
-  });
-
-  mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  mainWindow.setSkipTaskbar(true);
-
-  // Mouse clicks pass through to background windows
-  mainWindow.setIgnoreMouseEvents(true, { forward: true });
-
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
-
-  setupMouseProximityDetector(posX, posY, barWidth, totalWindowHeight);
-  setupWindowTracker();
-  setupLowLevelKeyboardListener();
-  setupStandardShortcuts();
-  loadCustomApps();
-  setupAppsConfigFileWatcher();
-
-  mainWindow.on('closed', () => {
-    if (mouseCheckInterval) clearInterval(mouseCheckInterval);
-    if (windowTrackerInterval) clearInterval(windowTrackerInterval);
-    mainWindow = null;
   });
 }
 
-function setupMouseProximityDetector(winX, winY, winW, totalH) {
-  const taskbarH = 60;
-  const taskbarTopY = winY + totalH - taskbarH;
+// Create taskbar instances on ALL connected displays
+function createTaskbarWindows() {
+  // Close existing windows cleanly if display setup changed
+  taskbarWindows.forEach(entry => {
+    try {
+      if (entry.win && !entry.win.isDestroyed()) {
+        entry.win.close();
+      }
+    } catch (e) {}
+  });
+  taskbarWindows = [];
+
+  const displays = screen.getAllDisplays();
+
+  displays.forEach((display, index) => {
+    const barWidth = Math.min(1240, display.bounds.width - 40);
+    const totalWindowHeight = 480;
+    const taskbarH = 60;
+
+    const posX = display.bounds.x + Math.floor((display.bounds.width - barWidth) / 2);
+    const posY = display.bounds.y + display.bounds.height - totalWindowHeight;
+    const taskbarTopY = posY + totalWindowHeight - taskbarH;
+
+    const win = new BrowserWindow({
+      width: barWidth,
+      height: totalWindowHeight,
+      x: posX,
+      y: posY,
+      frame: false,
+      transparent: true,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      resizable: false,
+      hasShadow: false,
+      focusable: true,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    });
+
+    win.setAlwaysOnTop(true, 'screen-saver');
+    win.setSkipTaskbar(true);
+
+    // Mouse clicks pass through to background apps
+    win.setIgnoreMouseEvents(true, { forward: true });
+
+    win.loadFile(path.join(__dirname, 'index.html'));
+
+    taskbarWindows.push({
+      win,
+      displayId: display.id,
+      posX,
+      posY,
+      barWidth,
+      totalWindowHeight,
+      taskbarTopY
+    });
+  });
+}
+
+function setupMouseProximityDetector() {
+  if (mouseCheckInterval) clearInterval(mouseCheckInterval);
 
   mouseCheckInterval = setInterval(() => {
-    if (!mainWindow || isKeyboardActive) return;
+    if (isKeyboardActive || taskbarWindows.length === 0) return;
 
     const point = screen.getCursorScreenPoint();
-    
-    const isMouseOver = (
-      point.x >= winX - 10 &&
-      point.x <= winX + winW + 10 &&
-      point.y >= taskbarTopY - 12 &&
-      point.y <= winY + totalH + 10
-    );
 
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('mouse-proximity', isMouseOver);
-    }
+    taskbarWindows.forEach(entry => {
+      if (!entry.win || entry.win.isDestroyed()) return;
+
+      // Check if mouse is hovering in the bottom 60px taskbar area of this monitor
+      const isMouseOver = (
+        point.x >= entry.posX - 10 &&
+        point.x <= entry.posX + entry.barWidth + 10 &&
+        point.y >= entry.taskbarTopY - 12 &&
+        point.y <= entry.posY + entry.totalWindowHeight + 10
+      );
+
+      entry.win.webContents.send('mouse-proximity', isMouseOver);
+    });
   }, 40);
 }
 
 function setupWindowTracker() {
   pollWindows = () => {
-    if (!mainWindow) return;
+    if (taskbarWindows.length === 0) return;
     exec(`"${trackerPath}"`, { maxBuffer: 1024 * 1024 * 5 }, async (err, stdout) => {
       if (err || !stdout) return;
       try {
@@ -162,18 +189,18 @@ function setupWindowTracker() {
           }
         }
 
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('windows-updated', windows);
-        }
+        broadcastToAll('windows-updated', windows);
       } catch (e) {}
     });
   };
 
+  if (windowTrackerInterval) clearInterval(windowTrackerInterval);
   windowTrackerInterval = setInterval(pollWindows, 750);
   setTimeout(pollWindows, 300);
 }
 
 function setupLowLevelKeyboardListener() {
+  if (vKeyListener) vKeyListener.kill();
   vKeyListener = new GlobalKeyboardListener();
 
   vKeyListener.addListener((e, down) => {
@@ -196,39 +223,64 @@ function setupLowLevelKeyboardListener() {
       else if (keyName === '8' || keyName === 'NUMPAD 8') appIndex = 8;
       else if (keyName === '9' || keyName === 'NUMPAD 9') appIndex = 9;
 
-      if (appIndex !== null && mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('trigger-action', { actionId: 'app-launch', data: appIndex });
+      if (appIndex !== null) {
+        broadcastToAll('trigger-action', { actionId: 'app-launch', data: appIndex });
       }
     }
   });
 }
 
+function getActiveDisplayWindow() {
+  const cursorPoint = screen.getCursorScreenPoint();
+  const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
+  const matched = taskbarWindows.find(entry => entry.displayId === currentDisplay.id);
+  if (matched && matched.win && !matched.win.isDestroyed()) {
+    return matched.win;
+  }
+  return taskbarWindows[0]?.win || null;
+}
+
 function setupStandardShortcuts() {
   globalShortcut.unregisterAll();
 
-  // Alt+Space -> Toggle Command Launcher
+  // Alt+Space -> Toggle Command Launcher on the screen where the cursor is
   try {
     globalShortcut.register('Alt+Space', () => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
+      const targetWin = getActiveDisplayWindow();
+      if (targetWin && !targetWin.isDestroyed()) {
         isKeyboardActive = true;
-        mainWindow.show();
-        mainWindow.focus();
-        mainWindow.webContents.send('trigger-action', { actionId: 'toggle-search' });
+        targetWin.show();
+        targetWin.focus();
+        targetWin.webContents.send('trigger-action', { actionId: 'toggle-search' });
       }
     });
   } catch (e) {}
 
-  // Alt+Shift+T -> Focus Taskbar for Arrow Navigation
+  // Alt+Shift+T -> Focus Taskbar for Arrow Navigation on the screen where the cursor is
   try {
     globalShortcut.register('Alt+Shift+T', () => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
+      const targetWin = getActiveDisplayWindow();
+      if (targetWin && !targetWin.isDestroyed()) {
         isKeyboardActive = true;
-        mainWindow.show();
-        mainWindow.focus();
-        mainWindow.webContents.send('trigger-action', { actionId: 'focus-bar' });
+        targetWin.show();
+        targetWin.focus();
+        targetWin.webContents.send('trigger-action', { actionId: 'focus-bar' });
       }
     });
   } catch (e) {}
+}
+
+function setupDisplayEventListeners() {
+  const handleDisplayChange = () => {
+    setTimeout(() => {
+      createTaskbarWindows();
+      if (pollWindows) pollWindows();
+    }, 500);
+  };
+
+  screen.on('display-added', handleDisplayChange);
+  screen.on('display-removed', handleDisplayChange);
+  screen.on('display-metrics-changed', handleDisplayChange);
 }
 
 ipcMain.handle('get-app-icon', async (event, exePath) => {
@@ -316,12 +368,22 @@ ipcMain.handle('get-system-stats', async () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createTaskbarWindows();
+  setupMouseProximityDetector();
+  setupWindowTracker();
+  setupLowLevelKeyboardListener();
+  setupStandardShortcuts();
+  loadCustomApps();
+  setupAppsConfigFileWatcher();
+  setupDisplayEventListeners();
+});
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
   if (vKeyListener) vKeyListener.kill();
   if (windowTrackerInterval) clearInterval(windowTrackerInterval);
+  if (mouseCheckInterval) clearInterval(mouseCheckInterval);
 });
 
 app.on('window-all-closed', () => {
